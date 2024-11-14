@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "../ChainDepthMeter"
+		}
+	],
+	"settings": {
+		"workbench.enableExperiments": false,
+		"git.ignoreLimitWarning": true
+	}
+}
