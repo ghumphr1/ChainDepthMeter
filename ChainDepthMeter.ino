@@ -6,9 +6,11 @@
 LiquidCrystal lcd(12,10,7,6,5,4);
 
 const int hallPin = 2;
-const int switchUpPin = 3;
+const int switchUpPin = 8;
+const int switchDownPin = 9;
 const int metres = 0;
-int direction = 1;
+int up = 0;
+int down = 0;
 
 volatile int rev = 0;
 
@@ -32,9 +34,9 @@ const uint8_t downArrow[] = {
         0b10101,
         0b01110,
         0b00100,
-    };    
+    };
 
-void count(){}    
+void count(){}
 
 void countDown() {
   rev++;
@@ -52,12 +54,14 @@ void countUp() {
   Serial.print(rev);
   Serial.println("detect");
   lcd.setCursor(0,3);
-  lcd.print((char)0x02);  
+  lcd.print((char)0x02);
   lcd.setCursor(9,3);
   lcd.print(rev);
   delay(100);
 }
-/home/ghumphr1/workspace/Arduino/ChainDepthCounter/linkCounter/Transistor as 5V buffer.JPG
+
+void setup() {
+  lcd.createChar(1, downArrow);
   lcd.createChar(2, upArrow);
   Serial.begin(115200);
   lcd.begin(20,4);
@@ -79,8 +83,9 @@ void countUp() {
   lcd.print("Metre");
   delay(2000);
   pinMode(hallPin, INPUT_PULLUP);
+  pinMode(switchUpPin, INPUT_PULLUP);
+  pinMode(switchDownPin, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(hallPin), count, FALLING);
-  attachInterrupt(digitalPinToInterrupt(switchUpPin), direction, LOW);
 }
 
 void loop() {
