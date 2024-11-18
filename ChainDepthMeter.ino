@@ -81,6 +81,9 @@ void clearEeprom(){                                       // Clear EEPROM memory
 }
 
 void setup() {
+  clearEeprom();
+  rev = EEPROM.read(eepromAddr);
+
   lcd.createChar(1, downArrow);
   lcd.createChar(2, upArrow);
   lcd.createChar(3, clrArrow);
@@ -114,7 +117,6 @@ void setup() {
 }
 
 void loop() {
-  clearEeprom;
 
   static unsigned long timer = 0;
    unsigned long interval = 20;
@@ -170,10 +172,6 @@ void loop() {
       Serial.print("RevSave ");
       Serial.println(revSave);
 
-      if (rev!=0){
-        EEPROM.write(eepromAddr, revSave);                          //if not equal to zero save to eeprom
-      }
+      EEPROM.update(eepromAddr, revSave);                          //save counter to eeprom
   }
 }
-
-//  TODO - add memory buffer for power down state
