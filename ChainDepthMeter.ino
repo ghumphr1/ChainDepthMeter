@@ -8,13 +8,13 @@ LiquidCrystal lcd(12,10,7,6,5,4);
 const int hallPin = 2;
 const int switchUpPin = 8;
 const int switchDownPin = 9;
-int metres = 0;                     // TO DO
 
-volatile int rev = 0;
+int metres = 0;                     // TO DO - conversion of revs to chain length
+
+volatile int rev = 0;               //  revolutions of caspan
 
 boolean switchStateDown = 0;        // current state of the down button
 boolean lastswitchStateDown = 0;    // previous state of the down button
-
 boolean switchStateUp = 0;          //  current state of the up button
 boolean lastswitchStateUp = 0;      //  previous state of the up button
 
@@ -62,7 +62,7 @@ void countChainDown() {
 
 void countChainUp() {
   if (rev>0){
-    rev--;
+    rev--;                          //stop count going below zero on chain up
   }
   Serial.print(rev);
   Serial.println("detect");
@@ -112,13 +112,12 @@ void loop() {
    {
       timer = millis();
       
-      // read the pushbutton input pin:
-      switchStateDown = digitalRead(switchDownPin);
-      // compare the buttonState to its previous state
-      if (switchStateDown != lastswitchStateDown)
-      {
-         // if the state has changed, increment the counter
-         if (switchStateDown == LOW)
+      
+      switchStateDown = digitalRead(switchDownPin);         // read the pushbutton input pin:
+      
+      if (switchStateDown != lastswitchStateDown)           // compare the buttonState to its previous state
+      {         
+         if (switchStateDown == LOW)                        // if the state has changed, increment the counter
          {
             // if the current state is LOW then the button went from off to on:
             lcd.setCursor(0,3);
@@ -133,20 +132,16 @@ void loop() {
             lcd.print((char)0x03);
             Serial.println("off");
          }
-          // save the current state as the last state, for next time through the loop
-          lastswitchStateDown = switchStateDown;
+        
+          lastswitchStateDown = switchStateDown;       // save the current state as the last state, for next time through the loop
       }
-
-           
-      // read the pushbutton input pin:
+      
       switchStateUp = digitalRead(switchUpPin);
-      // compare the buttonState to its previous state
+
       if (switchStateUp != lastswitchStateUp)
       {
-         // if the state has changed, increment the counter
          if (switchStateUp == LOW)
          {
-            // if the current state is LOW then the button went from off to on:
             lcd.setCursor(0,3);
             lcd.print((char)0x02);
             Serial.println("on");
@@ -154,17 +149,13 @@ void loop() {
          }
          else
          {
-            // if the current state is HIGH then the button went from on to off:
             lcd.setCursor(0,3);
             lcd.print((char)0x03);
             Serial.println("off");
          }
-          // save the current state as the last state, for next time through the loop
           lastswitchStateUp = switchStateUp;
       }
   }
-
-
 }
 
-//   attachInterrupt(digitalPinToInterrupt(hallPin), count, FALLING);
+//  TODO - add memory buffer for power down state
