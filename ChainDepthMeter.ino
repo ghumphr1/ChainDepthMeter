@@ -61,7 +61,7 @@ void countChainDown() {
 }
 
 void countChainUp() {
-  while (rev<0){
+  if (rev>0){
     rev--;
   }
   Serial.print(rev);
