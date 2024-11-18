@@ -2,6 +2,7 @@
 //by Vizualart.
 
 #include<LiquidCrystal.h>
+#include <EEPROM.h>
 
 LiquidCrystal lcd(12,10,7,6,5,4);
 
@@ -9,7 +10,9 @@ const int hallPin = 2;
 const int switchUpPin = 8;
 const int switchDownPin = 9;
 
-int metres = 0;                     // TO DO - conversion of revs to chain length
+int eepromAddr = 0;
+int metres = 0;                    // TO DO - conversion of revs to chain length
+int revSave = 0;
 
 volatile int rev = 0;               //  revolutions of caspan
 
@@ -71,6 +74,12 @@ void countChainUp() {
   delay(100);
 }
 
+void clearEeprom(){                                       // Clear EEPROM memory
+  for (int i = 0 ; i < EEPROM.length() ; i++) {
+    EEPROM.write(i, 0);
+  }
+}
+
 void setup() {
   lcd.createChar(1, downArrow);
   lcd.createChar(2, upArrow);
@@ -105,6 +114,7 @@ void setup() {
 }
 
 void loop() {
+  clearEeprom;
 
   static unsigned long timer = 0;
    unsigned long interval = 20;
@@ -154,6 +164,14 @@ void loop() {
             Serial.println("off");
          }
           lastswitchStateUp = switchStateUp;
+      }
+
+      revSave = rev;
+      Serial.print("RevSave ");
+      Serial.println(revSave);
+
+      if (rev!=0){
+        EEPROM.write(eepromAddr, revSave);                          //if not equal to zero save to eeprom
       }
   }
 }
