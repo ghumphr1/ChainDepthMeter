@@ -1,25 +1,36 @@
 //Arduino Hall Effect Sensor Chain Depth Project
 //by Vizualart.
 
-#include<LiquidCrystal.h>
+#include <LiquidCrystal.h>
 #include <EEPROM.h>
+#include "DHT_Async.h"
 
-LiquidCrystal lcd(12,10,7,6,5,4);
+#define DHT_SENSOR_TYPE DHT_TYPE_22
 
-const int hallPin = 2;
+LiquidCrystal lcd(12,11,7,6,5,4);
+
+const int hallPin = 2;                    // Timing input from Capstan
+static const int DHT_SENSOR_PIN = 3;     // Temp/Humidity
 const int switchUpPin = 8;
 const int switchDownPin = 9;
+const int saveMemoryPin = 10;
 
 int eepromAddr = 0;
 int metres = 0;                    // TO DO - conversion of revs to chain length
-int revSave = 0;
 
-volatile int rev = 0;               //  revolutions of caspan
+unsigned long timer = 0;
+unsigned long interval = 500;
+
+volatile int rev = 0;               //  revolutions of capstan
 
 boolean switchStateDown = 0;        // current state of the down button
-boolean lastswitchStateDown = 0;    // previous state of the down button
-boolean switchStateUp = 0;          //  current state of the up button
-boolean lastswitchStateUp = 0;      //  previous state of the up button
+boolean lastSwitchStateDown = 0;    // previous state of the down button
+boolean switchStateUp = 0;
+boolean lastSwitchStateUp = 0;
+boolean switchStateSave = 0;
+boolean lastswitchStateSave = 0;
+
+DHT_Async dht_sensor(DHT_SENSOR_PIN, DHT_SENSOR_TYPE);
 
 const uint8_t clrArrow[] = {        //  clear Arrow from display
         0b00000,
@@ -112,29 +123,29 @@ void setup() {
   pinMode(hallPin, INPUT_PULLUP);
   pinMode(switchUpPin, INPUT_PULLUP);
   pinMode(switchDownPin, INPUT_PULLUP);
+  pinMode(saveMemoryPin, INPUT_PULLUP);
   Serial.begin(115200);
-  
+  timer = millis();
 }
 
 void loop() {
 
-  static unsigned long timer = 0;
-   unsigned long interval = 20;
-   if (millis() - timer >= interval)
-   {
+    float temperature;
+    float humidity;
+
+   if (millis() - timer >= interval){
       timer = millis();
-      
-      
+            
       switchStateDown = digitalRead(switchDownPin);         // read the pushbutton input pin:
       
-      if (switchStateDown != lastswitchStateDown)           // compare the buttonState to its previous state
+      if (switchStateDown != lastSwitchStateDown)           // compare the buttonState to its previous state
       {         
          if (switchStateDown == LOW)                        // if the state has changed, increment the counter
          {
             // if the current state is LOW then the button went from off to on:
             lcd.setCursor(0,3);
             lcd.print((char)0x01);
-            Serial.println("on");
+            Serial.println("down on");
             attachInterrupt(digitalPinToInterrupt(hallPin), countChainDown, FALLING);
          }
          else
@@ -142,36 +153,69 @@ void loop() {
             // if the current state is HIGH then the button went from on to off:
             lcd.setCursor(0,3);
             lcd.print((char)0x03);
-            Serial.println("off");
+            Serial.println("down off");
          }
         
-          lastswitchStateDown = switchStateDown;       // save the current state as the last state, for next time through the loop
+          lastSwitchStateDown = switchStateDown;       // save the current state as the last state, for next time through the loop
       }
+
+      delay(200);
       
       switchStateUp = digitalRead(switchUpPin);
 
-      if (switchStateUp != lastswitchStateUp)
+      if (switchStateUp != lastSwitchStateUp)
       {
          if (switchStateUp == LOW)
          {
             lcd.setCursor(0,3);
             lcd.print((char)0x02);
-            Serial.println("on");
+            Serial.println("up on");
             attachInterrupt(digitalPinToInterrupt(hallPin), countChainUp, FALLING);
          }
          else
          {
             lcd.setCursor(0,3);
             lcd.print((char)0x03);
-            Serial.println("off");
+            Serial.println("up off");
          }
-          lastswitchStateUp = switchStateUp;
+          lastSwitchStateUp = switchStateUp;
       }
 
-      revSave = rev;
-      Serial.print("RevSave ");
-      Serial.println(revSave);
+      delay(200);
 
-      EEPROM.update(eepromAddr, revSave);                          //save counter to eeprom
+      switchStateSave = digitalRead(saveMemoryPin);         // read the pushbutton input pin:
+      
+      if (switchStateSave != lastswitchStateSave)           // compare the buttonState to its previous state
+      {         
+         if (switchStateSave == LOW)                        // if the state has changed, increment the counter
+         {
+            // if the current state is LOW then the button went from off to on:
+            lcd.setCursor(0,3);
+            lcd.print((char)0x01);
+            Serial.println("save on");
+            Serial.print("RevSave ");
+            Serial.println(rev);
+            EEPROM.update(eepromAddr, rev);                          //save counter to eeprom
+         }
+          else
+         {
+            // if the current state is HIGH then the button went from on to off:
+            lcd.setCursor(0,3);
+            lcd.print((char)0x03);
+            Serial.println("save off");
+         }
+        
+          lastswitchStateSave = switchStateSave;       // save the current state as the last state, for next time through the loop
+      }
+
+//      if (measure_environment(&temperature, &humidity)) {
+//        Serial.print("T = ");
+//        Serial.print(temperature, 1);
+//        Serial.print(" deg. C, H = ");
+//        Serial.print(humidity, 1);
+//        Serial.println("%");
+//      }
+
+      delay(200); 
   }
 }
